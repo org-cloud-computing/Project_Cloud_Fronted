@@ -3,9 +3,9 @@ import axios, { type AxiosInstance } from "axios";
 // Cada microservicio tiene su propia URL base, configurable por variables de
 // entorno (ver .env.example). En producción deberían apuntar al AWS API
 // Gateway (HTTPS) que expone cada uno públicamente.
-const MS1_URL = import.meta.env.VITE_MS1_URL || "http://localhost:8000";
-const MS3_URL = import.meta.env.VITE_MS3_API_URL || "http://localhost:8000";
-const MS5_URL = import.meta.env.VITE_MS5_URL || "http://localhost:8080";
+const MS1_URL = import.meta.env.VITE_MS1_URL;
+const MS3_URL = import.meta.env.VITE_MS3_API_URL
+const MS5_URL = import.meta.env.VITE_MS5_URL;
 
 function makeClient(baseURL: string): AxiosInstance {
   const instance = axios.create({ baseURL, timeout: 15000 });
