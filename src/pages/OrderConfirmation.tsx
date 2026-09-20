@@ -51,9 +51,9 @@ export default function OrderConfirmation() {
           {detalle.map((d) => (
             <div key={d.id} className="order-detail-row">
               <span>
-                {d.nombre_producto} × {d.cantidad}
+                {d.producto_nombre} × {d.cantidad}
               </span>
-              <span>S/ {formatPEN(d.sub_total)}</span>
+              <span>S/ {formatPEN(d.subtotal)}</span>
             </div>
           ))}
           <div className="order-detail-row" style={{ fontWeight: 700, borderBottom: "none" }}>
