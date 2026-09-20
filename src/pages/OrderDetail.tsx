@@ -44,7 +44,9 @@ export default function OrderDetail() {
       </p>
       <div className="page-heading">
         <h1>Pedido #{pedido.id}</h1>
-        <p>{new Date(pedido.fecha_pedido).toLocaleString("es-PE")}</p>
+        <p>
+          {new Date(pedido.fecha_pedido.replace(" ", "T")).toLocaleString("es-PE")}
+        </p>
       </div>
 
       <div className="page-body" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 32 }}>
@@ -67,23 +69,25 @@ export default function OrderDetail() {
           </span>
           <div className="cart-summary-row">
             <span>Subtotal</span>
-<span>S/ {formatPEN(pedido.subtotal)}</span>
+            <span>S/ {formatPEN(Number(pedido.subtotal))}</span>
           </div>
           <div className="cart-summary-row">
             <span>IGV</span>
-            <span>S/ {formatPEN(pedido.impuestos)}</span>
+            <span>S/ {formatPEN(Number(pedido.impuestos))}</span>
           </div>
           <div className="cart-summary-total">
             <span>Total</span>
-            <span>S/ {formatPEN(pedido.total)}</span>
+            <span>S/ {formatPEN(Number(pedido.total))}</span>
           </div>
           {pago && (
             <>
               <div className="section-divider" />
               <p style={{ fontSize: 13, color: "var(--color-ink-soft)" }}>
-                Pagado con <strong>{pago.metodo_pago.replace("_", " ")}</strong>
+                Pagado con <strong>{(pago.metodo_pago || "").replace("_", " ")}</strong>
               </p>
-              <p style={{ fontSize: 13, color: "var(--color-ink-soft)" }}>Estado del pago: {pago.estado_pago}</p>
+              <p style={{ fontSize: 13, color: "var(--color-ink-soft)" }}>
+                Estado del pago: {pago.estado_pago}
+              </p>
             </>
           )}
         </div>
