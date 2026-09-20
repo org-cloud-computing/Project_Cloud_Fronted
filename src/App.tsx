@@ -17,6 +17,7 @@ import OrderDetail from "./pages/OrderDetail";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import RequireVendedor from './components/RequireVendedor';
 
 function App() {
   return (
@@ -64,7 +65,14 @@ function App() {
                 </RequireAuth>
               }
             />
-            <Route path="/analitica" element={<Dashboard />} />
+            <Route
+  path="/analitica"
+  element={
+    <RequireVendedor>
+      <Dashboard />
+    </RequireVendedor>
+  }
+/>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

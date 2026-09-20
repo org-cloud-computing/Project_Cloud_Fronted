@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import * as ms2 from "../api/ms2.mock";
+import * as ms2 from "../api/ms2";
 import { formatPEN } from "../components/PriceTag";
 import type { PedidoConDetalle } from "../types";
 

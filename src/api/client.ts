@@ -3,9 +3,9 @@ import axios, { type AxiosInstance } from "axios";
 // Cada microservicio tiene su propia URL base, configurable por variables de
 // entorno (ver .env.example). En producción deberían apuntar al AWS API
 // Gateway (HTTPS) que expone cada uno públicamente.
-const MS1_URL = import.meta.env.VITE_MS1_URL || "http://localhost:8000";
-const MS3_URL = import.meta.env.VITE_MS3_API_URL?.trim().replace(/\/+$/, "");
-const MS5_URL = import.meta.env.VITE_MS5_URL || "http://localhost:8080";
+const MS1_URL = import.meta.env.VITE_MS1_URL;
+const MS3_URL = import.meta.env.VITE_MS3_API_URL
+const MS5_URL = import.meta.env.VITE_MS5_URL;
 
 function makeClient(baseURL: string): AxiosInstance {
   const instance = axios.create({ baseURL, timeout: 15000 });
@@ -22,9 +22,8 @@ ms3Client.interceptors.request.use((config) => {
 });
 export const ms5Client = makeClient(MS5_URL);
 
-// El MS2 (Clientes / Pedidos / Pago) todavía no ha sido implementado por el
-// equipo. Mientras tanto USE_MOCK_MS2 controla si el front usa el servicio
-// simulado (src/api/ms2.mock.js) o intenta llamar a una API real en
-// VITE_MS2_URL. Ver README para más detalle.
-export const USE_MOCK_MS2 = (import.meta.env.VITE_USE_MOCK_MS2 ?? "true") !== "false";
-export const ms2Client = makeClient(import.meta.env.VITE_MS2_URL || "http://localhost:8001");
+// MS2 — Clientes / Pedidos / Pago (Node.js + Express + MySQL).
+// VITE_MS2_URL debe incluir el prefijo /ms2 con el que el backend monta sus
+// rutas (ver src/app.js de MS2), igual que MS1 con /ms1, p.ej.
+// http://localhost:3000/ms2 en local o la URL del API Gateway en producción.
+export const ms2Client = makeClient(import.meta.env.VITE_MS2_URL || "http://localhost:3000/ms2");

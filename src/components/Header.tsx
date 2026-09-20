@@ -11,7 +11,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { cliente, isAuthenticated, logout } = useAuth();
+  const { cliente, isAuthenticated, isVendedor, logout } = useAuth();
   const { itemCount } = useCart();
 
   useEffect(() => {
@@ -115,10 +115,12 @@ export function Header() {
             )}
           </div>
 
-          <Link to="/analitica" className="header-action">
-            <span>Ventas &amp; datos</span>
-            <strong>Panel analítico</strong>
-          </Link>
+          {isVendedor && (
+  <Link to="/analitica" className="header-action">
+    <span>Ventas &amp; datos</span>
+    <strong>Panel analítico</strong>
+  </Link>
+)}
 
           <Link to="/carrito" className="header-cart">
             <span className="header-cart-icon">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import * as ms2 from "../api/ms2.mock";
+import * as ms2 from "../api/ms2";
 import { formatPEN } from "../components/PriceTag";
 import type { Pedido } from "../types";
 
