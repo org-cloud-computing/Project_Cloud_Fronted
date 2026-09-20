@@ -22,6 +22,7 @@ ms3Client.interceptors.request.use((config) => {
 });
 export const ms5Client = makeClient(MS5_URL);
 
+
 // MS2 — Clientes / Pedidos / Pago (Node.js + Express + MySQL).
 // VITE_MS2_URL debe incluir el prefijo /ms2 con el que el backend monta sus
 // rutas (ver src/app.js de MS2), igual que MS1 con /ms1, p.ej.
