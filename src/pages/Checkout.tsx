@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatPEN } from "../components/PriceTag";
-import * as ms2 from "../api/ms2.mock";
+import * as ms2 from "../api/ms2";
+import type { MetodoPago } from "../types";
 
 const IGV = 0.18;
-const METODOS = [
+const METODOS: { value: MetodoPago; label: string }[] = [
   { value: "tarjeta_credito", label: "Tarjeta de crédito" },
   { value: "debito", label: "Tarjeta de débito" },
   { value: "paypal", label: "PayPal" },
@@ -15,7 +16,8 @@ const METODOS = [
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
   const { cliente } = useAuth();
-  const [metodoPago, setMetodoPago] = useState("tarjeta_credito");
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("tarjeta_credito");
+  const [direccionEnvio, setDireccionEnvio] = useState(cliente?.direccion ?? "");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -36,6 +38,10 @@ export default function Checkout() {
 
   async function handlePlaceOrder() {
     if (!cliente) return;
+    if (!direccionEnvio.trim()) {
+      setError("Ingresa una dirección de envío.");
+      return;
+    }
     setPlacing(true);
     setError(null);
     try {
@@ -48,11 +54,12 @@ export default function Checkout() {
           cantidad: it.cantidad,
         })),
         metodoPago,
+        direccionEnvio: direccionEnvio.trim(),
       });
       await clearCart();
       navigate(`/pedido-confirmado/${pedido.id}`, { replace: true });
     } catch (err) {
-      setError("No se pudo registrar el pedido. Intenta nuevamente.");
+      setError(err instanceof Error ? err.message : "No se pudo registrar el pedido. Intenta nuevamente.");
     } finally {
       setPlacing(false);
     }
@@ -64,7 +71,7 @@ export default function Checkout() {
     <div className="container">
       <div className="page-heading">
         <h1>Finalizar compra</h1>
-        <p>Este paso simula al MS2 (Clientes / Pedidos / Pago) directamente — sin pasar por el orquestador.</p>
+        <p>Este paso llama directamente a MS2 (Clientes / Pedidos / Pago) — sin pasar por el orquestador.</p>
       </div>
 
       <div className="cart-layout page-body">
@@ -72,10 +79,17 @@ export default function Checkout() {
           <div className="card" style={{ padding: 22, marginBottom: 20 }}>
             <h3 style={{ marginBottom: 12 }}>Entregar a</h3>
             <p style={{ fontWeight: 600 }}>{cliente.nombre}</p>
-            <p style={{ color: "var(--color-ink-soft)", fontSize: 14 }}>
-              {cliente.direccion || "Sin dirección registrada"}
-            </p>
-            <p style={{ color: "var(--color-ink-soft)", fontSize: 14 }}>{cliente.email}</p>
+            <p style={{ color: "var(--color-ink-soft)", fontSize: 14, marginBottom: 10 }}>{cliente.email}</p>
+            <div className="field">
+              <label htmlFor="direccionEnvio">Dirección de envío</label>
+              <input
+                id="direccionEnvio"
+                required
+                value={direccionEnvio}
+                onChange={(e) => setDireccionEnvio(e.target.value)}
+                placeholder="Av. Ejemplo 123, Lima"
+              />
+            </div>
           </div>
 
           <div className="card" style={{ padding: 22, marginBottom: 20 }}>

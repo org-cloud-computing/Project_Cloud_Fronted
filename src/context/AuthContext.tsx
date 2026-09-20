@@ -1,14 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { USE_MOCK_MS2 } from "../api/client";
-import * as ms2 from "../api/ms2.mock";
-// Cuando exista un MS2 real, se puede crear src/api/ms2.ts con las mismas
-// funciones y alternar el import según USE_MOCK_MS2.
-import type { Cliente, IniciarSesionPayload, RegistrarClientePayload } from "../types";
+import * as ms2 from "../api/ms2";
+import type { Cliente, IniciarSesionPayload, RegistrarClientePayload, Rol } from "../types";
 
 interface AuthContextValue {
   cliente: Cliente | null;
   isAuthenticated: boolean;
+  rol: Rol | null;
+  isVendedor: boolean;
   loading: boolean;
   error: string | null;
   register: (payload: RegistrarClientePayload) => Promise<Cliente>;
@@ -27,15 +26,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!USE_MOCK_MS2) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        "VITE_USE_MOCK_MS2=false, pero todavía no existe src/api/ms2.ts real. " +
-          "El front seguirá usando el servicio simulado hasta que se implemente MS2."
-      );
-    }
-  }, []);
+  const rol = useMemo<Rol | null>(() => {
+    if (!cliente) return null;
+    return ms2.esEmailVendedor(cliente.email) ? "vendedor" : "cliente";
+  }, [cliente]);
 
   async function register(payload: RegistrarClientePayload): Promise<Cliente> {
     setLoading(true);
@@ -75,7 +69,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <AuthContext.Provider value={{ cliente, isAuthenticated: !!cliente, loading, error, register, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        cliente,
+        isAuthenticated: !!cliente,
+        rol,
+        isVendedor: rol === "vendedor",
+        loading,
+        error,
+        register,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -22,9 +22,9 @@ ms3Client.interceptors.request.use((config) => {
 });
 export const ms5Client = makeClient(MS5_URL);
 
-// El MS2 (Clientes / Pedidos / Pago) todavía no ha sido implementado por el
-// equipo. Mientras tanto USE_MOCK_MS2 controla si el front usa el servicio
-// simulado (src/api/ms2.mock.js) o intenta llamar a una API real en
-// VITE_MS2_URL. Ver README para más detalle.
-export const USE_MOCK_MS2 = false;
-export const ms2Client = makeClient(import.meta.env.VITE_MS2_URL || "http://localhost:8001");
+
+// MS2 — Clientes / Pedidos / Pago (Node.js + Express + MySQL).
+// VITE_MS2_URL debe incluir el prefijo /ms2 con el que el backend monta sus
+// rutas (ver src/app.js de MS2), igual que MS1 con /ms1, p.ej.
+// http://localhost:3000/ms2 en local o la URL del API Gateway en producción.
+export const ms2Client = makeClient(import.meta.env.VITE_MS2_URL || "http://localhost:3000/ms2");

@@ -1,5 +1,5 @@
 // ============================================================================
-// Tipos compartidos del dominio (MS1, MS2 mock, MS3, MS5)
+// Tipos compartidos del dominio (MS1, MS2, MS3, MS5)
 // ============================================================================
 
 /** MS1 — Categoría de catálogo */
@@ -52,7 +52,7 @@ export interface Warehouse {
 }
 
 // ----------------------------------------------------------------------------
-// MS2 (mock) — Clientes / Pedidos / Pago
+// MS2 — Clientes / Pedidos / Pago (Node.js + Express + MySQL, prefijo /ms2)
 // ----------------------------------------------------------------------------
 
 export interface Cliente {
@@ -61,14 +61,20 @@ export interface Cliente {
   email: string;
   direccion?: string;
   telefono?: string;
+  pais?: string;
   creado_en?: string;
 }
-
-/** Registro interno del mock, incluye password; nunca se expone tal cual */
-export interface ClienteConPassword extends Cliente {
-  password: string;
-}
-
+/**
+ * MS2 no tiene un campo de rol en Cliente: solo existe un vendedor (el dueño
+ * de la tienda) y se identifica por email/clave fijos del front (ver
+ * src/api/ms2.ts). Cualquier otra cuenta autenticada es "cliente".
+ */
+export type Rol = "vendedor" | "cliente";
+/**
+ * MS2 no tiene modelo de autenticación (el modelo Cliente no tiene columna
+ * `password` y no existe endpoint de login). La contraseña solo se guarda
+ * localmente en el navegador para permitir un login básico; ver src/api/ms2.ts.
+ */
 export interface RegistrarClientePayload {
   nombre: string;
   email: string;
@@ -82,32 +88,37 @@ export interface IniciarSesionPayload {
   password: string;
 }
 
+export type EstadoPedido = "procesando" | "pendiente" | "pagado" | "cancelado";
+export type MetodoPago = "tarjeta_credito" | "debito" | "paypal";
+
 export interface Pedido {
   id: number;
   cliente_id: number | string;
   fecha_pedido: string;
-  estado: string;
-  sub_total: number;
+  estado: EstadoPedido;
+  subtotal: number;
   impuestos: number;
   total: number;
+  direccion_envio: string;
+  metodo_pago: MetodoPago;
 }
 
 export interface DetallePedido {
   id: number;
   pedido_id: number;
   producto_id: number | string;
-  nombre_producto: string;
+  producto_nombre: string;
   precio_unitario: number;
   cantidad: number;
-  sub_total: number;
+  subtotal: number;
 }
 
 export interface Pago {
   id: number;
   pedido_id: number;
-  metodo_pago: string;
+  metodo_pago: MetodoPago;
   monto: number;
-  estado_pago: string;
+  estado_pago: "aprobado" | "rechazado" | "en_proceso";
   fecha_pago: string;
 }
 
@@ -127,7 +138,8 @@ export interface ItemParaPedido {
 export interface CrearPedidoPayload {
   clienteId: number | string;
   items: ItemParaPedido[];
-  metodoPago: string;
+  metodoPago: MetodoPago;
+  direccionEnvio: string;
 }
 
 // ----------------------------------------------------------------------------
@@ -223,3 +235,4 @@ export interface CarritoAbiertoRow {
 
 /** Fila genérica usada por DataTable/BarList cuando la forma no se tipa en detalle */
 export type AnalyticsRow = Record<string, unknown>;
+

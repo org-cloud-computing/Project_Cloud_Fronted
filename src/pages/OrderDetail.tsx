@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import * as ms2 from "../api/ms2.mock";
+import * as ms2 from "../api/ms2";
 import { formatPEN } from "../components/PriceTag";
 import type { PedidoConDetalle } from "../types";
 
@@ -51,13 +51,13 @@ export default function OrderDetail() {
         <div className="card" style={{ padding: 22 }}>
           <h3 style={{ marginBottom: 14 }}>Productos</h3>
           {detalle.map((d) => (
-            <div key={d.id} className="order-detail-row">
-              <span>
-                {d.nombre_producto} × {d.cantidad}
-              </span>
-              <span>S/ {formatPEN(d.sub_total)}</span>
-            </div>
-          ))}
+  <div key={d.id} className="order-detail-row">
+    <span>
+      {d.producto_nombre} × {d.cantidad}
+    </span>
+    <span>S/ {formatPEN(d.subtotal)}</span>
+  </div>
+))}
         </div>
 
         <div className="card" style={{ padding: 22, height: "fit-content" }}>
@@ -67,7 +67,7 @@ export default function OrderDetail() {
           </span>
           <div className="cart-summary-row">
             <span>Subtotal</span>
-            <span>S/ {formatPEN(pedido.sub_total)}</span>
+<span>S/ {formatPEN(pedido.subtotal)}</span>
           </div>
           <div className="cart-summary-row">
             <span>IGV</span>
