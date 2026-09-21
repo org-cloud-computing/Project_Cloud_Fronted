@@ -30,7 +30,11 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <h1>Ingresa a tu cuenta</h1>
-        <p className="subtitle">Identifícate para ver tus pedidos y completar la compra.</p>
+        <p className="subtitle">
+          {from === "/analitica"
+            ? "Ingresa con la cuenta de vendedor para abrir el panel analítico."
+            : "Identifícate para ver tus pedidos y completar la compra."}
+        </p>
         <div className="auth-banner">
           El módulo de clientes (MS2) aún no está implementado por el equipo. Esta sección funciona con
           una simulación local en tu navegador — puedes registrarte con cualquier correo.
