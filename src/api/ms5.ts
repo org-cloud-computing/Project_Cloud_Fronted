@@ -14,7 +14,7 @@ import type {
 // Cada endpoint responde con una lista de filas (objetos clave-valor en texto).
 
 async function run<T>(path: string): Promise<T[]> {
-  const { data } = await ms5Client.get<T[]>(`/api/analytics/${path}`);
+  const { data } = await ms5Client.get<T[]>(`/${path}`);
   return data;
 }
 
