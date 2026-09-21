@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { getPopulatedCategories } from "../lib/populatedCategories";
 import type { Category } from "../types";
+import BrandLogo from "./BrandLogo";
 
 export function Header() {
   const [query, setQuery] = useState("");
@@ -37,13 +38,11 @@ export function Header() {
 
   return (
     <header className="site-header">
-      <div className="header-topbar">Proyecto académico de Cloud Computing · catálogo, carrito y analítica en microservicios</div>
+      <div className="header-topbar">Encuentra eso que va contigo. Descubre Qhapaq ↗</div>
 
       <div className="header-main">
         <Link to="/" className="header-logo">
-          <strong>
-            Qhapa<span>q</span>
-          </strong>
+          <BrandLogo />
           <small>Marketplace multicategoría</small>
         </Link>
 
@@ -56,7 +55,7 @@ export function Header() {
             aria-label="Buscar productos"
           />
           <button type="submit" aria-label="Buscar">
-            🔍
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           </button>
         </form>
 
@@ -122,9 +121,9 @@ export function Header() {
   </Link>
 )}
 
-          <Link to="/carrito" className="header-cart">
+          <Link to="/carrito" className="header-cart" aria-label="Carrito">
             <span className="header-cart-icon">
-              🛒
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 3h2l2.5 12h11L21 7H6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" /></svg>
               {itemCount > 0 && <span className="header-cart-count">{itemCount}</span>}
             </span>
             <strong>Carrito</strong>

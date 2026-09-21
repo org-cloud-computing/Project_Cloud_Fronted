@@ -1,22 +1,24 @@
+import BrandLogo from "./BrandLogo";
+
 export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="container site-footer-inner">
         <div>
-          <p className="site-footer-brand">Qhapaq</p>
-          <p className="site-footer-tag">Proyecto académico de Cloud Computing — arquitectura de microservicios.</p>
+          <div className="site-footer-brand"><BrandLogo /></div>
+          <p className="site-footer-tag">Un mundo de posibilidades. Encuentra eso que buscas y descubre lo que va contigo.</p>
         </div>
         <div className="site-footer-col">
           <p className="site-footer-heading">Catálogo</p>
-          <span>Categorías, productos e inventario vienen del MS1.</span>
+          <span>Explora distintas categorías y encuentra tus próximos favoritos.</span>
         </div>
         <div className="site-footer-col">
           <p className="site-footer-heading">Compras</p>
-          <span>El carrito se sincroniza en tiempo real con el MS3 (MongoDB).</span>
+          <span>Reúne tus favoritos en el carrito y continúa cuando estés listo.</span>
         </div>
         <div className="site-footer-col">
           <p className="site-footer-heading">Analítica</p>
-          <span>Consultas en vivo contra AWS Athena a través del MS5.</span>
+          <span>Una mirada a los datos para conocer mejor cada venta.</span>
         </div>
       </div>
       <div className="container">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCategories, getProducts } from "../api/ms1";
 import { getPopulatedCategories } from "../lib/populatedCategories";
+import HeroArtwork from "../components/HeroArtwork";
 import CategoryRow from "../components/CategoryRow";
 import ProductCard from "../components/ProductCard";
 import type { Category, Product } from "../types";
@@ -39,42 +40,40 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="container hero-inner">
-          <div>
-            <p className="hero-eyebrow">Marketplace multicategoría</p>
-            <h1>Todo lo que buscas, cruzando la nube en segundos.</h1>
-            <p>
-              Catálogo, carrito y analítica corriendo sobre microservicios independientes conectados por
-              AWS API Gateway: así de rápido se mueve Qhapaq.
+          <div className="hero-copy">
+            <p className="hero-eyebrow"><span /> Un mundo por descubrir</p>
+            <h1>Eso que buscas.<br /><span>Eso que va contigo.</span></h1>
+            <p className="hero-description">
+              Encuentra tus próximos favoritos en tecnología, hogar y mucho más.
+              Explora, elige y hazlos parte de tu día.
             </p>
             <div className="hero-cta">
-              <a href="#destacados" className="btn btn-primary">
-                Ver productos destacados
-              </a>
-              <Link to="/analitica" className="btn btn-outline" style={{ color: "#fff", borderColor: "#5c67a8" }}>
-                Ver panel analítico
-              </Link>
+              <a href="#destacados" className="btn btn-primary">Explorar productos <span aria-hidden="true">↗</span></a>
+              <Link to="/analitica" className="hero-secondary">Panel analítico <span aria-hidden="true">→</span></Link>
             </div>
+            <p className="hero-footnote">Mucho por encontrar. Un lugar para empezar.</p>
           </div>
-          <div className="hero-art" aria-hidden="true">
-            <div style={{ background: "#3d3270" }} />
-            <div style={{ background: "#e3a33b" }} />
-            <div style={{ background: "#1f6f6b" }} />
-            <div style={{ background: "#4a3e82" }} />
-          </div>
+          <HeroArtwork />
         </div>
       </section>
+
+      <div className="container discovery-strip">
+        <div><span className="discovery-icon" aria-hidden="true">✳</span><p><strong>Para cada versión de ti</strong><span>Explora distintas categorías</span></p></div>
+        <div><span className="discovery-icon" aria-hidden="true">↗</span><p><strong>Descubre tu próximo favorito</strong><span>Detalles que hacen la diferencia</span></p></div>
+        <div><span className="discovery-icon" aria-hidden="true">♡</span><p><strong>Todo empieza con un vistazo</strong><span>Inspírate y elige a tu ritmo</span></p></div>
+      </div>
 
       <div className="container" id="destacados">
         {/* ---------- Productos destacados (catálogo general del MS1) ---------- */}
         <section className="category-row">
           <div className="category-row-head">
-            <h2>Productos destacados</h2>
+            <div><p className="section-eyebrow">EXPLORA QHAPAQ</p><h2>Tus próximos favoritos</h2></div><span className="section-caption">Encuentra algo que vaya contigo</span>
           </div>
 
           {featuredError && (
             <div className="state-msg">
               <h3>No pudimos cargar el catálogo</h3>
-              <p>Verifica que el MS1 esté activo y que VITE_MS1_URL apunte a la URL correcta.</p>
+              <p>No pudimos conectar con el catálogo. Intenta nuevamente en unos momentos.</p>
             </div>
           )}
 
@@ -89,7 +88,7 @@ export default function Home() {
           {featured?.length === 0 && (
             <div className="state-msg">
               <h3>Todavía no hay productos cargados</h3>
-              <p>Carga productos desde el MS1 para que aparezcan aquí.</p>
+              <p>Vuelve pronto para descubrir nuevos favoritos.</p>
             </div>
           )}
 
@@ -108,12 +107,12 @@ export default function Home() {
 
         {popError && (
           <div className="state-msg">
-            <p>No se pudieron detectar categorías con stock desde el MS1.</p>
+            <p>Las categorías no están disponibles en este momento. Intenta nuevamente más tarde.</p>
           </div>
         )}
 
         {/* ---------- Explorar el resto del catálogo de categorías ---------- */}
-        <section style={{ padding: "30px 0 60px" }}>
+        <section className="explore-categories">
           {!showAllCategories ? (
             <button className="btn-ghost" onClick={loadAllCategories}>
               Explorar todas las categorías del catálogo →
@@ -122,8 +121,7 @@ export default function Home() {
             <>
               <h2 style={{ fontSize: 18, marginBottom: 14 }}>Todas las categorías</h2>
               <p style={{ color: "var(--color-ink-faint)", fontSize: 13, marginBottom: 16 }}>
-                El MS1 tiene {allCategories?.length ?? "…"} categorías registradas; sólo un subconjunto tiene
-                productos vinculados todavía, así que algunas pueden mostrarse vacías.
+                Explora nuestras {allCategories?.length ?? "…"} categorías. Algunas todavía no tienen productos disponibles.
               </p>
               {!allCategories ? (
                 <div className="skeleton" style={{ height: 120 }} />
