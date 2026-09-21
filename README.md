@@ -1,5 +1,17 @@
 # React + TypeScript + Vite
 
+## Acceso al panel analítico
+
+El build de producción carga la cuenta de demostración de `.env.production`:
+`maybelith.z@gmail.com`, contraseña `12345`. Ingresa desde `/ingresar` y abre
+`/analitica`; no es necesario registrar esta cuenta como cliente.
+
+Las variables `VITE_VENDEDOR_EMAIL`, `VITE_VENDEDOR_PASSWORD` y
+`VITE_VENDEDOR_NOMBRE` del entorno de compilación (por ejemplo, Amplify)
+tienen prioridad. Si se cambian, hay que volver a compilar y desplegar.
+Para desarrollo local, copia los valores de `.env.example` a `.env`.
+Estas credenciales de demostración se incorporan al JavaScript del frontend.
+
 ## Carrito MS3
 
 En `.env`, agrega la siguiente variable sin reemplazar las de otros servicios
