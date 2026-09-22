@@ -13,8 +13,16 @@ import type {
 // Repositorio: https://github.com/maydelithzuniga/MS5
 // Cada endpoint responde con una lista de filas (objetos clave-valor en texto).
 
+const MS5_USER = import.meta.env.VITE_MS5_USER || "admin3";
+const MS5_PASSWORD = import.meta.env.VITE_MS5_PASSWORD || "admin3123";
+
 async function run<T>(path: string): Promise<T[]> {
-  const { data } = await ms5Client.get<T[]>(`/${path}`);
+  const { data } = await ms5Client.get<T[]>(`/${path}`, {
+    auth: {
+      username: MS5_USER,
+      password: MS5_PASSWORD,
+    },
+  });
   return data;
 }
 
