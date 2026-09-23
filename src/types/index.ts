@@ -142,6 +142,27 @@ export interface CrearPedidoPayload {
   direccionEnvio: string;
 }
 
+/** MS4 obtiene los productos y precios desde MS3/MS1. */
+export interface CheckoutRequest {
+  cliente_id: number;
+  direccion_envio: string;
+  metodo_pago: MetodoPago;
+}
+
+export interface CheckoutResponse {
+  mensaje: string;
+  pedido_id: number;
+  pago_id: number;
+  total: number;
+  estado_pedido: string;
+  items: {
+    producto_id: number;
+    cantidad: number;
+    precio_unitario: number;
+    producto_nombre: string;
+  }[];
+}
+
 // ----------------------------------------------------------------------------
 // MS3 — Carrito de compras
 // ----------------------------------------------------------------------------
@@ -235,4 +256,3 @@ export interface CarritoAbiertoRow {
 
 /** Fila genérica usada por DataTable/BarList cuando la forma no se tipa en detalle */
 export type AnalyticsRow = Record<string, unknown>;
-

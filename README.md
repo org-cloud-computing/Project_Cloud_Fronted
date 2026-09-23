@@ -1,5 +1,34 @@
 # React + TypeScript + Vite
 
+## Checkout con MS4
+
+Configura `VITE_MS4_URL` con la URL base del orquestador, incluyendo `/ms4`
+(por ejemplo, `http://localhost:8083/ms4` en desarrollo). En Amplify define
+la URL HTTPS pública como variable de compilación y vuelve a desplegar.
+No agregues `/checkout` a esta variable.
+
+El checkout envía `POST /ms4/checkout` con `cliente_id` numérico,
+`direccion_envio` y `metodo_pago` (`tarjeta_credito`, `debito` o `paypal`).
+MS4 obtiene el carrito de MS3, valida precios y stock en MS1, registra el
+pedido y pago en MS2 y vacía el carrito. El frontend refresca el carrito
+y muestra la confirmación con el total y los productos devueltos por MS4.
+El resumen previo es estimado; el precio definitivo lo calcula el backend.
+
+Mis pedidos consulta `GET /ms4/checkout/usuario/{cliente_id}/pedidos`.
+El detalle de pedido y la confirmación al recargar siguen leyendo MS2, ya
+que MS4 no expone el detalle de productos ni el pago en su consulta de estado.
+Clientes y autenticación siguen usando MS2. La cuenta de vendedor no puede
+comprar porque no representa un cliente numérico del backend.
+
+El cliente espera hasta 120 segundos por MS4 y no reintenta compras
+automáticamente. Ante errores de red o servidor, consulta Mis pedidos
+antes de repetir el pago: el backend no expone una clave de idempotencia.
+El endpoint público debe permitir CORS desde el origen del frontend.
+
+Validación de la integración: `node tests/ms4.mjs`, `npm run build` y
+`npm run lint`. Las pruebas de MS4 simulan HTTP y no crean pedidos reales.
+
+
 ## Acceso al panel analítico
 
 El build de producción carga la cuenta de demostración de `.env.production`:

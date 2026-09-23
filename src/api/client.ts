@@ -22,6 +22,16 @@ ms3Client.interceptors.request.use((config) => {
 });
 export const ms5Client = makeClient(MS5_URL);
 
+// Incluye /ms4 en la URL base. El checkout coordina varias llamadas de backend.
+const MS4_URL = import.meta.env.VITE_MS4_URL?.trim().replace(/\/+$/, "");
+export const ms4Client = axios.create({ baseURL: MS4_URL, timeout: 120000 });
+ms4Client.interceptors.request.use((config) => {
+  if (!MS4_URL) {
+    throw new Error("Configura VITE_MS4_URL (incluyendo /ms4) y vuelve a iniciar o compilar el frontend.");
+  }
+  return config;
+});
+
 
 // MS2 — Clientes / Pedidos / Pago (Node.js + Express + MySQL).
 // VITE_MS2_URL debe incluir el prefijo /ms2 con el que el backend monta sus

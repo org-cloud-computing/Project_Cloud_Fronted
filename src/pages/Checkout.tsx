@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatPEN } from "../components/PriceTag";
-import * as ms2 from "../api/ms2";
+import { clienteIdNumerico, procesarCheckout } from "../api/ms4";
 import type { MetodoPago } from "../types";
 
 const IGV = 0.18;
@@ -14,16 +14,21 @@ const METODOS: { value: MetodoPago; label: string }[] = [
 ];
 
 export default function Checkout() {
-  const { items, subtotal, clearCart } = useCart();
-  const { cliente } = useAuth();
+  const { items, subtotal, reload, loading, error: cartError } = useCart();
+  const { cliente, isVendedor } = useAuth();
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("tarjeta_credito");
   const [direccionEnvio, setDireccionEnvio] = useState(cliente?.direccion ?? "");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const submitting = useRef(false);
 
   const impuestos = subtotal * IGV;
   const total = subtotal + impuestos;
+
+  if (isVendedor) return <div className="container"><p>Para comprar, ingresa con una cuenta de cliente.</p><Link to="/ingresar">Ingresar</Link></div>;
+  if (loading) return <div className="container"><p role="status">Cargando carrito…</p></div>;
+  if (cartError) return <div className="container"><p role="alert">{cartError}</p></div>;
 
   if (items.length === 0) {
     return (
@@ -37,30 +42,30 @@ export default function Checkout() {
   }
 
   async function handlePlaceOrder() {
-    if (!cliente) return;
+    if (!cliente || submitting.current) return;
     if (!direccionEnvio.trim()) {
       setError("Ingresa una dirección de envío.");
       return;
     }
+    submitting.current = true;
     setPlacing(true);
     setError(null);
     try {
-      const { pedido } = await ms2.crearPedidoDesdeCarrito({
-        clienteId: cliente.id,
-        items: items.map((it) => ({
-          idProducto: it.idProducto ?? it.id_producto ?? "",
-          nombre: it.nombre,
-          precioUnitario: it.precioUnitario,
-          cantidad: it.cantidad,
-        })),
-        metodoPago,
-        direccionEnvio: direccionEnvio.trim(),
+      const resultado = await procesarCheckout({
+        cliente_id: clienteIdNumerico(cliente.id),
+        direccion_envio: direccionEnvio.trim(),
+        metodo_pago: metodoPago,
       });
-      await clearCart();
-      navigate(`/pedido-confirmado/${pedido.id}`, { replace: true });
+      // MS4 ya vació el carrito: solo sincronizamos el estado del navegador.
+      reload();
+      navigate(`/pedido-confirmado/${resultado.pedido_id}`, {
+        replace: true,
+        state: { checkout: resultado },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo registrar el pedido. Intenta nuevamente.");
     } finally {
+      submitting.current = false;
       setPlacing(false);
     }
   }
@@ -71,7 +76,7 @@ export default function Checkout() {
     <div className="container">
       <div className="page-heading">
         <h1>Finalizar compra</h1>
-        <p>Este paso llama directamente a MS2 (Clientes / Pedidos / Pago) — sin pasar por el orquestador.</p>
+        <p>Revisa tu dirección y confirma tu compra.</p>
       </div>
 
       <div className="cart-layout page-body">
@@ -125,7 +130,8 @@ export default function Checkout() {
         </div>
 
         <aside className="cart-summary">
-          <h3 style={{ marginBottom: 12 }}>Resumen</h3>
+          <h3 style={{ marginBottom: 12 }}>Resumen estimado</h3>
+          <p>El total final se calcula con los precios vigentes al confirmar.</p>
           <div className="cart-summary-row">
             <span>Subtotal</span>
             <span>S/ {formatPEN(subtotal)}</span>
@@ -138,8 +144,8 @@ export default function Checkout() {
             <span>Total</span>
             <span style={{ fontSize: 20, fontFamily: "var(--font-display)" }}>S/ {formatPEN(total)}</span>
           </div>
-          {error && <p className="field-error" style={{ marginTop: 10 }}>{error}</p>}
-          <button className="btn btn-primary btn-block" style={{ marginTop: 18 }} onClick={handlePlaceOrder} disabled={placing}>
+          {error && <p role="alert" className="field-error" style={{ marginTop: 10 }}>{error} <Link to="/cuenta/pedidos">Ver mis pedidos</Link></p>}
+          <button className="btn btn-primary btn-block" style={{ marginTop: 18 }} onClick={handlePlaceOrder} disabled={placing || !direccionEnvio.trim()}>
             {placing ? "Procesando pago…" : "Confirmar y pagar"}
           </button>
         </aside>

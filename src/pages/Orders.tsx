@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import * as ms2 from "../api/ms2";
+import * as ms4 from "../api/ms4";
 import { formatPEN } from "../components/PriceTag";
 import type { Pedido } from "../types";
 
@@ -17,9 +17,15 @@ export default function Orders() {
   const { cliente } = useAuth();
   const [orders, setOrders] = useState<Pedido[] | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!cliente) return;
-    ms2.getPedidosByCliente(cliente.id).then(setOrders);
+    let active = true;
+    ms4.getPedidosByCliente(cliente.id)
+      .then((data) => { if (active) setOrders(data); })
+      .catch((err: Error) => { if (active) setError(err.message); });
+    return () => { active = false; };
   }, [cliente]);
 
   if (!cliente) return null;
@@ -28,10 +34,11 @@ export default function Orders() {
     <div className="container">
       <div className="page-heading">
         <h1>Mis pedidos</h1>
-        <p>Historial simulado (MS2) de tus compras en Qhapaq.</p>
+        <p>Historial de tus compras en Qhapaq.</p>
       </div>
       <div className="page-body">
-        {!orders && <div className="skeleton" style={{ height: 160 }} />}
+        {error && <p role="alert" className="field-error">{error}</p>}
+        {!orders && !error && <div className="skeleton" style={{ height: 160 }} />}
         {orders?.length === 0 && (
           <div className="state-msg">
             <h3>Todavía no tienes pedidos</h3>

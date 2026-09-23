@@ -3,12 +3,7 @@
 // ----------------------------------------------------------------------------
 // Cliente real de MS2. Repositorio: https://github.com/org-cloud-computing/Cloud_backend_ms2
 //
-// MS2 no expone un endpoint que cree pedido + detalle + pago en una sola
-// llamada (según su README esos endpoints los usa normalmente el
-// orquestador), así que este módulo hace la orquestación desde el front:
-//   1. POST /pedidos           -> crea el pedido (cabecera)
-//   2. POST /detalle-pedido    -> uno por cada ítem del carrito
-//   3. POST /pagos             -> registra el pago del pedido
+// El checkout se procesa mediante MS4 (src/api/ms4.ts).
 //
 // MS2 tampoco tiene autenticación: el modelo Cliente no guarda `password` y
 // no existe endpoint de login. `iniciarSesion` valida la contraseña contra un
@@ -23,7 +18,6 @@ import { isAxiosError } from "axios";
 import { ms2Client } from "./client";
 import type {
   Cliente,
-  CrearPedidoPayload,
   DetallePedido,
   IniciarSesionPayload,
   Pago,
@@ -34,7 +28,6 @@ import type {
 
 const SESSION_KEY = "ms2_session_v1";
 const LOCAL_CREDENTIALS_KEY = "ms2_local_credentials_v1";
-const IMPUESTO_TASA = 0.18; // IGV Perú
 const VENDEDOR_EMAIL = (import.meta.env.VITE_VENDEDOR_EMAIL || "").trim().toLowerCase();
 const VENDEDOR_PASSWORD = import.meta.env.VITE_VENDEDOR_PASSWORD || "";
 const VENDEDOR_NOMBRE = import.meta.env.VITE_VENDEDOR_NOMBRE || "Vendedor";
@@ -70,10 +63,6 @@ function messageOf(err: unknown, fallback: string): string {
     }
   }
   return fallback;
-}
-
-function round2(n: number): number {
-  return Number(n.toFixed(2));
 }
 
 // ---------------------------------------------------------------------------
@@ -167,69 +156,6 @@ export function cerrarSesion(): void {
 // ---------------------------------------------------------------------------
 // Pedidos + Detalle + Pago
 // ---------------------------------------------------------------------------
-
-// Crea un pedido a partir de los items de un carrito de MS3, orquestando las
-// tres llamadas que expone MS2 (pedido, detalle-pedido x N, pago).
-export async function crearPedidoDesdeCarrito({
-  clienteId,
-  items,
-  metodoPago,
-  direccionEnvio,
-}: CrearPedidoPayload): Promise<PedidoConDetalle> {
-  const subtotal = round2(items.reduce((sum, it) => sum + it.precioUnitario * it.cantidad, 0));
-  const impuestos = round2(subtotal * IMPUESTO_TASA);
-  const total = round2(subtotal + impuestos);
-
-  let pedido: Pedido;
-  try {
-    const { data } = await ms2Client.post<Pedido>("/pedidos", {
-      cliente_id: clienteId,
-      estado: "pagado",
-      subtotal,
-      impuestos,
-      total,
-      direccion_envio: direccionEnvio,
-      metodo_pago: metodoPago,
-    });
-    pedido = data;
-  } catch (err) {
-    throw new ApiError(messageOf(err, "No se pudo registrar el pedido."), statusOf(err));
-  }
-
-  let detalle: DetallePedido[];
-  try {
-    detalle = await Promise.all(
-      items.map(async (it) => {
-        const { data } = await ms2Client.post<DetallePedido>("/detalle-pedido", {
-          pedido_id: pedido.id,
-          producto_id: it.idProducto,
-          producto_nombre: it.nombre,
-          precio_unitario: it.precioUnitario,
-          cantidad: it.cantidad,
-          subtotal: round2(it.precioUnitario * it.cantidad),
-        });
-        return data;
-      })
-    );
-  } catch (err) {
-    throw new ApiError(messageOf(err, "El pedido se creó, pero no se pudo registrar el detalle de productos."), statusOf(err));
-  }
-
-  let pago: Pago;
-  try {
-    const { data } = await ms2Client.post<Pago>("/pagos", {
-      pedido_id: pedido.id,
-      metodo_pago: metodoPago,
-      monto: total,
-      estado_pago: "aprobado",
-    });
-    pago = data;
-  } catch (err) {
-    throw new ApiError(messageOf(err, "El pedido se registró, pero no se pudo procesar el pago."), statusOf(err));
-  }
-
-  return { pedido, detalle, pago };
-}
 
 export async function getPedidosByCliente(clienteId: string | number): Promise<Pedido[]> {
   try {
