@@ -15,10 +15,33 @@ y muestra la confirmación con el total y los productos devueltos por MS4.
 El resumen previo es estimado; el precio definitivo lo calcula el backend.
 
 Mis pedidos consulta `GET /ms4/checkout/usuario/{cliente_id}/pedidos`.
-El detalle de pedido y la confirmación al recargar siguen leyendo MS2, ya
-que MS4 no expone el detalle de productos ni el pago en su consulta de estado.
+El detalle consulta `GET /ms4/checkout/{pedido_id}/estado` para el estado,
+fecha y total del pedido; sigue leyendo MS2 para los productos y el pago.
+La consulta a MS4 no bloquea la visualización: mientras responde, o si falla,
+se conservan los datos de MS2 y se indica cuando no pudo actualizarse el estado.
+La confirmación al recargar también lee MS2, ya que la consulta de estado de
+MS4 no contiene los productos ni el pago.
 Clientes y autenticación siguen usando MS2. La cuenta de vendedor no puede
 comprar porque no representa un cliente numérico del backend.
+
+`src/api/ms4.ts` cubre los siete endpoints del backend:
+
+| Método y ruta (base `/ms4`) | Función | Uso |
+| --- | --- | --- |
+| `GET /health` | `getHealth` | Consulta de salud disponible en el cliente API |
+| `POST /checkout` | `procesarCheckout` | Compra completa |
+| `GET /checkout/{pedido_id}/estado` | `getEstadoPedido` | Detalle del pedido |
+| `GET /checkout/usuario/{cliente_id}/pedidos` | `getPedidosByCliente` | Mis pedidos |
+| `PATCH /stock/reservar` | `reservarStock` | Operación independiente disponible en el cliente API |
+| `POST /pedidos` | `crearPedido` | Operación independiente disponible en el cliente API |
+| `POST /pagos` | `registrarPago` | Operación independiente disponible en el cliente API |
+
+Los tres proxies reciben los campos definidos por MS4 en `src/models.py`.
+La reserva envía `producto_id`, `cliente_id` y `cantidad`; su respuesta usa
+`product_id`. El pago permite omitir `estado_pago` (por defecto `aprobado`).
+Estos proxies no hacen orquestación ni rollback y no se llaman adicionalmente
+durante el checkout, que ya reserva stock, crea el pedido y registra el pago.
+No se añaden formularios para ejecutar estas operaciones por separado.
 
 El cliente espera hasta 120 segundos por MS4 y no reintenta compras
 automáticamente. Ante errores de red o servidor, consulta Mis pedidos
@@ -27,6 +50,10 @@ El endpoint público debe permitir CORS desde el origen del frontend.
 
 Validación de la integración: `node tests/ms4.mjs`, `npm run build` y
 `npm run lint`. Las pruebas de MS4 simulan HTTP y no crean pedidos reales.
+`node tests/order-detail.mjs` verifica el detalle en Chromium con respuestas
+simuladas, incluyendo MS4 caído o sin responder y pedidos inexistentes.
+Requiere Chromium instalado (o `CHROME_BIN` apuntando al ejecutable) y permiso
+para abrir un puerto local.
 
 
 ## Acceso al panel analítico

@@ -1,5 +1,5 @@
 // ============================================================================
-// Tipos compartidos del dominio (MS1, MS2, MS3, MS5)
+// Tipos compartidos del dominio (MS1, MS2, MS3, MS4, MS5)
 // ============================================================================
 
 /** MS1 — Categoría de catálogo */
@@ -161,6 +161,49 @@ export interface CheckoutResponse {
     precio_unitario: number;
     producto_nombre: string;
   }[];
+}
+
+/** MS4 — Consulta de salud y operaciones independientes del checkout. */
+export interface HealthResponse {
+  status: string;
+  service: string;
+  timestamp: string;
+}
+
+// La ruta de estado devuelve los valores de MS2 sin convertirlos ni validarlos.
+export interface EstadoPedidoResponse {
+  pedido_id: number;
+  estado: EstadoPedido | null;
+  fecha_pedido: string | null;
+  total: number | string | null;
+}
+
+export interface ReservarStockRequest {
+  producto_id: number;
+  cliente_id: number;
+  cantidad: number;
+}
+
+export interface ReservarStockResponse {
+  exito: boolean;
+  product_id: number;
+  available_stock: number;
+}
+
+export interface CrearPedidoRequest {
+  cliente_id: number;
+  subtotal: number;
+  impuestos: number;
+  total: number;
+  direccion_envio: string;
+  metodo_pago: MetodoPago;
+}
+
+export interface CrearPagoRequest {
+  pedido_id: number;
+  monto: number;
+  metodo_pago: MetodoPago;
+  estado_pago?: Pago["estado_pago"];
 }
 
 // ----------------------------------------------------------------------------

@@ -83,6 +83,71 @@ await withClient('https://compras.example/ms4/', async (api, client, server) => 
     ], status: 200, statusText: 'OK', headers: {}, config };
   };
   assert.deepEqual((await api.getPedidosByCliente('7')).map((p) => p.id), [2, 1]);
+
+  const pedido = {
+    cliente_id: 7, subtotal: 100, impuestos: 18, total: 118,
+    direccion_envio: ' Lima ', metodo_pago: 'debito',
+  };
+  const pago = { pedido_id: 12, monto: 118, metodo_pago: 'debito' };
+  const reserva = { producto_id: 5, cliente_id: 7, cantidad: 2 };
+  const endpoints = [
+    ['getHealth', [], 'get', '/health', undefined,
+      { status: 'ok', service: 'ms4-orquestador', timestamp: '2026-09-23T10:00:00' }],
+    ['getEstadoPedido', ['12'], 'get', '/checkout/12/estado', undefined,
+      { pedido_id: 12, estado: 'pagado', fecha_pedido: '2026-09-23', total: '118.00' }],
+    ['reservarStock', [reserva], 'patch', '/stock/reservar', reserva,
+      { exito: true, product_id: 5, available_stock: 8 }],
+    ['crearPedido', [pedido], 'post', '/pedidos', { ...pedido, direccion_envio: 'Lima' },
+      { ...pedido, id: 12, estado: 'pendiente', fecha_pedido: '2026-09-23' }],
+    ['registrarPago', [pago], 'post', '/pagos', { ...pago, estado_pago: 'aprobado' },
+      { ...pago, id: 34, estado_pago: 'aprobado', fecha_pago: '2026-09-23' }],
+    ['registrarPago', [{ ...pago, estado_pago: 'en_proceso' }], 'post', '/pagos',
+      { ...pago, estado_pago: 'en_proceso' }, { ...pago, id: 35, estado_pago: 'en_proceso' }],
+  ];
+  for (const [name, args, method, url, body, response] of endpoints) {
+    let requests = 0;
+    client.defaults.adapter = async (config) => {
+      requests++;
+      assert.equal(config.baseURL, 'https://compras.example/ms4');
+      assert.equal(config.method, method);
+      assert.equal(config.url, url);
+      assert.deepEqual(config.data ? JSON.parse(config.data) : undefined, body);
+      return { data: response, status: method === 'post' ? 201 : 200, statusText: 'OK', headers: {}, config };
+    };
+    assert.deepEqual(await api[name](...args), response);
+    assert.equal(requests, 1);
+
+    for (const [status, data, expected] of [
+      [409, { detail: 'Stock insuficiente' }, /Stock insuficiente/],
+      [404, { detail: 'Pedido no encontrado' }, /Pedido no encontrado/],
+      [422, { detail: [{ msg: 'Invalid input' }] }, /Verifica los datos/],
+      [503, { detail: 'Internal backend URL' }, /El servicio no pudo completar/],
+      [0, null, /No se pudo confirmar/],
+    ]) {
+      let attempts = 0;
+      client.defaults.adapter = async () => {
+        attempts++;
+        throw { isAxiosError: true, response: status ? { status, data } : undefined };
+      };
+      await assert.rejects(api[name](...args), expected);
+      assert.equal(attempts, 1, `${name} no reintenta automáticamente`);
+    }
+  }
+
+  client.defaults.adapter = async () => { assert.fail('Datos inválidos no deben enviar HTTP'); };
+  for (const id of ['', 0, -1, 1.5, 'abc', Number.MAX_SAFE_INTEGER + 1]) {
+    await assert.rejects(api.getEstadoPedido(id), /entero positivo/);
+    await assert.rejects(api.registrarPago({ ...pago, pedido_id: id }), /entero positivo/);
+    await assert.rejects(api.reservarStock({ ...reserva, producto_id: id }), /entero positivo/);
+    await assert.rejects(api.reservarStock({ ...reserva, cantidad: id }), /entero positivo/);
+    await assert.rejects(api.crearPedido({ ...pedido, cliente_id: id }), /cuenta de cliente/);
+  }
+  for (const value of [-1, NaN, Infinity]) {
+    await assert.rejects(api.registrarPago({ ...pago, monto: value }), /importes/);
+    for (const field of ['subtotal', 'impuestos', 'total']) {
+      await assert.rejects(api.crearPedido({ ...pedido, [field]: value }), /importes/);
+    }
+  }
 });
 
 await withClient('', async (api, client) => {
@@ -90,5 +155,14 @@ await withClient('', async (api, client) => {
   await assert.rejects(api.procesarCheckout({
     cliente_id: 7, direccion_envio: 'Lima', metodo_pago: 'paypal',
   }), /Configura VITE_MS4_URL/);
+  await assert.rejects(api.getHealth(), /Configura VITE_MS4_URL/);
+  await assert.rejects(api.getEstadoPedido(12), /Configura VITE_MS4_URL/);
+  await assert.rejects(api.getPedidosByCliente(7), /Configura VITE_MS4_URL/);
+  await assert.rejects(api.reservarStock({ producto_id: 5, cliente_id: 7, cantidad: 2 }), /Configura VITE_MS4_URL/);
+  await assert.rejects(api.crearPedido({
+    cliente_id: 7, subtotal: 100, impuestos: 18, total: 118,
+    direccion_envio: 'Lima', metodo_pago: 'debito',
+  }), /Configura VITE_MS4_URL/);
+  await assert.rejects(api.registrarPago({ pedido_id: 12, monto: 118, metodo_pago: 'debito' }), /Configura VITE_MS4_URL/);
 });
-console.log('MS4: contrato, validación, errores, historial y configuración verificados.');
+console.log('MS4: siete endpoints, contratos, validación, errores y configuración verificados.');

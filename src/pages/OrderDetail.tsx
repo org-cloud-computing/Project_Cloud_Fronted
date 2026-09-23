@@ -1,27 +1,37 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import * as ms2 from "../api/ms2";
+import * as ms4 from "../api/ms4";
 import { formatPEN } from "../components/PriceTag";
-import type { PedidoConDetalle } from "../types";
+import type { EstadoPedidoResponse, PedidoConDetalle } from "../types";
 
 export default function OrderDetail() {
   const { orderId } = useParams<{ orderId: string }>();
+  return orderId ? <OrderDetailContent key={orderId} orderId={orderId} /> : null;
+}
+
+function OrderDetailContent({ orderId }: { orderId: string }) {
   const [data, setData] = useState<PedidoConDetalle | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [estado, setEstado] = useState<EstadoPedidoResponse | null>(null);
+  const [estadoError, setEstadoError] = useState(false);
 
   useEffect(() => {
-    if (!orderId) return;
-    ms2
-      .getPedidoById(orderId)
-      .then(setData)
-      .catch(() => setError("No se encontró este pedido."));
+    let active = true;
+    ms2.getPedidoById(orderId)
+      .then((detalle) => { if (active) setData(detalle); })
+      .catch((err: Error) => { if (active) setError(err.message); });
+    ms4.getEstadoPedido(orderId)
+      .then((result) => { if (active) setEstado(result); })
+      .catch(() => { if (active) setEstadoError(true); });
+    return () => { active = false; };
   }, [orderId]);
 
   if (error) {
     return (
       <div className="container">
         <div className="state-msg">
-          <h3>{error}</h3>
+          <h3 role="alert">{error}</h3>
         </div>
       </div>
     );
@@ -36,6 +46,7 @@ export default function OrderDetail() {
   }
 
   const { pedido, detalle, pago } = data;
+  const total = estado?.total == null ? Number(pedido.total) : Number(estado.total);
 
   return (
     <div className="container">
@@ -45,7 +56,7 @@ export default function OrderDetail() {
       <div className="page-heading">
         <h1>Pedido #{pedido.id}</h1>
         <p>
-          {new Date(pedido.fecha_pedido.replace(" ", "T")).toLocaleString("es-PE")}
+          {new Date((estado?.fecha_pedido ?? pedido.fecha_pedido).replace(" ", "T")).toLocaleString("es-PE")}
         </p>
       </div>
 
@@ -65,8 +76,9 @@ export default function OrderDetail() {
         <div className="card" style={{ padding: 22, height: "fit-content" }}>
           <h3 style={{ marginBottom: 14 }}>Estado</h3>
           <span className="badge badge-teal" style={{ marginBottom: 16 }}>
-            {pedido.estado}
+            {estado?.estado ?? pedido.estado}
           </span>
+          {estadoError && <p role="status">No se pudo actualizar el estado. Se muestran los datos del pedido disponibles.</p>}
           <div className="cart-summary-row">
             <span>Subtotal</span>
             <span>S/ {formatPEN(Number(pedido.subtotal))}</span>
@@ -77,7 +89,7 @@ export default function OrderDetail() {
           </div>
           <div className="cart-summary-total">
             <span>Total</span>
-            <span>S/ {formatPEN(Number(pedido.total))}</span>
+            <span>S/ {formatPEN(Number.isFinite(total) ? total : Number(pedido.total))}</span>
           </div>
           {pago && (
             <>
